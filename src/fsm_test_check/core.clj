@@ -33,10 +33,11 @@
   [cmd-seq state-seq commands]
   (letfn [(shrink-subseq [s]
             (when (seq s)
-              [(map #(get cmd-seq %) s)
+              (#'clojure.test.check.rose-tree/make-rose
+               (map #(get cmd-seq %) s)
                (->> (remove-seq s)
                     (filter (partial valid-sequence? commands state-seq cmd-seq))
-                    (mapv shrink-subseq))]))]
+                    (mapv shrink-subseq)))))]
     (shrink-subseq (range 0 (count cmd-seq)))))
 
 (defn cmd-seq-helper
@@ -59,10 +60,10 @@
             (fn [num-elements]
               (gen/bind (cmd-seq-helper state commands num-elements)
                         (fn [cmd-seq]
-                          (let [shrinked (shrink-sequence (mapv first cmd-seq)
-                                                          (mapv second cmd-seq)
-                                                          commands)]
-                            (gen/gen-pure shrinked)))))))
+                          (-> (shrink-sequence (mapv first cmd-seq)
+                                               (mapv second cmd-seq)
+                                               commands)
+                              gen/gen-pure))))))
 
 ;;-----------------------------------------------------
 ;;commands
